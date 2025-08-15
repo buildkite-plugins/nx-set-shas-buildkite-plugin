@@ -19,7 +19,7 @@ setup() {
 cleanup_stubs() {
   if stat ${BATS_TMPDIR}/*-stub-plan >/dev/null 2>&1; then
     for file in ${BATS_TMPDIR}/*-stub-plan; do
-      program=$(basename $(echo "$file" | rev | cut -c 11- | rev))
+      program="$(basename "$(echo "$file" | rev | cut -c 11- | rev)")"
       # Note: This will not error if unstubbing a command fails.
       unstub $program || true
     done

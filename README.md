@@ -1,4 +1,4 @@
-# Nx Set SHAs Buildkite Plugin
+# Nx Set SHAs Buildkite Plugin [![Build status](https://badge.buildkite.com/b94916f8659ae6941a5cb34bcaff600deb9ff30e09101fcbce.svg)](https://buildkite.com/buildkite/plugins-nx-set-shas)
 
 A [Buildkite](https://buildkite.com/) plugin that fetches and sets base and head SHAs for more efficient [Nx](https://nx.dev) monorepo builds.
 

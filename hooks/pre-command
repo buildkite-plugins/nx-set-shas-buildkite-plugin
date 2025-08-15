@@ -60,18 +60,22 @@ if [ -n "${ERR_MESSAGE:-}" ]; then
   exit 1
 fi
 
-export NX_BASE=$(echo "$response" | jq -c -r '.data.pipeline.builds | select(.edges != []) | .edges[0].node.commit')
+NX_BASE=$(echo "$response" | jq -c -r '.data.pipeline.builds | select(.edges != []) | .edges[0].node.commit')
+export NX_BASE
 if [ -z "${NX_BASE:-}" ] || [ "${NX_BASE}" = "" ]; then
   echo "Last successful commit not found for '$branch' branch..."
 
   if [ "$IS_PR" = "true" ]; then
-    export NX_BASE=$(git merge-base $branch HEAD)
+    NX_BASE=$(git merge-base "$branch" HEAD)
+    export NX_BASE
   else
-    export NX_BASE=$(git rev-parse HEAD~1)
+    NX_BASE=$(git rev-parse HEAD~1)
+    export NX_BASE
   fi 
 fi
 
 echo "NX_BASE: $NX_BASE"
 
-export NX_HEAD=$(git rev-parse HEAD)
+NX_HEAD=$(git rev-parse HEAD)
+export NX_HEAD
 echo "NX_HEAD: $NX_HEAD"
