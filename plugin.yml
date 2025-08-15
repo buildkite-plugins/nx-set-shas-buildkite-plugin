@@ -1,0 +1,14 @@
+name: nx-set-shas
+version: "0.1.0"
+description: A Buildkite plugin that fetches and sets base and head SHAs for more efficient Nx builds.
+author: https://github.com/buildkite
+requirements:
+  - curl
+  - jq
+
+configuration:
+  properties:
+    api-token:
+      type: string
+      description: Buildkite API access token with the GraphQL scope enabled.
+  additionalProperties: false

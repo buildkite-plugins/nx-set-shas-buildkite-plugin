@@ -1,0 +1,15 @@
+steps:
+  - label: ":shell: Run Shellcheck"
+    plugins:
+      - shellcheck#v1.4.0:
+          files:
+            - hooks/**
+
+  - label: ":sparkles: Run lint checks"
+    plugins:
+      - plugin-linter#v3.3.0:
+          id: nx-set-shas
+
+  - label: ":test_tube: Run tests"
+    plugins:
+      - plugin-tester#v1.2.0:

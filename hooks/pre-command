@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+API_TOKEN="${BUILDKITE_PLUGIN_NX_SET_SHAS_API_TOKEN:-}"
+if [ -z "${API_TOKEN:-}" ]; then
+  API_TOKEN="${GRAPHQL_API_TOKEN:-}"
+fi
+
+if [ -z "${API_TOKEN:-}" ]; then
+  echo "GraphQL API token is required."
+  exit 1
+fi
+
+org=${BUILDKITE_ORGANIZATION_SLUG}
+pipeline=${BUILDKITE_PIPELINE_SLUG}
+branch=${BUILDKITE_BRANCH}
+IS_PR=false
+
+if [ "${BUILDKITE_PULL_REQUEST}" != "false" ]; then
+  IS_PR=true
+  echo "Current build is a PR build. Will find last successful build for base branch: $BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+  branch=${BUILDKITE_PULL_REQUEST_BASE_BRANCH}
+else
+  echo "Current build is not triggered by a PR build"
+fi
+
+query=$(cat <<EOF
+{
+  pipeline(slug: "$org/$pipeline") {
+    builds(first: 1, branch: "$branch", state: PASSED) {
+      edges {
+        node {
+          commit
+          branch
+          state
+        }
+      }
+    }
+  }
+}
+EOF
+)
+
+echo "Sending GraphQL query to fetch commit of last successful build"
+echo "$query"
+
+response=$(curl -sS -X POST https://graphql.buildkite.com/v1 \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "$(jq -n --arg q "$query" '{query: $q}')")
+
+echo "Raw response from Buildkite GraphQL (commit query):"
+echo "$response"
+
+ERR_MESSAGE=$(echo "$response" | jq -c -r '. | select(.errors != null) | .errors[0].message')
+
+if [ -n "${ERR_MESSAGE:-}" ]; then
+  echo "❌ GraphQL API call failed. Error: $ERR_MESSAGE"
+  exit 1
+fi
+
+export NX_BASE=$(echo "$response" | jq -c -r '.data.pipeline.builds | select(.edges != []) | .edges[0].node.commit')
+if [ -z "${NX_BASE:-}" ] || [ "${NX_BASE}" = "" ]; then
+  echo "Last successful commit not found for '$branch' branch..."
+
+  if [ "$IS_PR" = "true" ]; then
+    export NX_BASE=$(git merge-base $branch HEAD)
+  else
+    export NX_BASE=$(git rev-parse HEAD~1)
+  fi 
+fi
+
+echo "NX_BASE: $NX_BASE"
+
+export NX_HEAD=$(git rev-parse HEAD)
+echo "NX_HEAD: $NX_HEAD"
