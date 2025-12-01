@@ -12,4 +12,4 @@ steps:
 
   - label: ":test_tube: Run tests"
     plugins:
-      - plugin-tester#v1.2.0:
+      - plugin-tester#v1.3.0:
